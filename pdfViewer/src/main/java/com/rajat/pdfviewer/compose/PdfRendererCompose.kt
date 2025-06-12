@@ -1,22 +1,19 @@
 package com.rajat.pdfviewer.compose
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.rajat.pdfviewer.HeaderData
 import com.rajat.pdfviewer.PdfRendererView
 import com.rajat.pdfviewer.util.CacheStrategy
 import com.rajat.pdfviewer.util.FileUtils.fileFromAsset
 import com.rajat.pdfviewer.util.PdfSource
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.io.File
 
 @Composable
@@ -34,11 +31,13 @@ fun PdfRendererViewCompose(
     val context = LocalContext.current
     val pdfViewRef = remember { mutableStateOf<PdfRendererView?>(null) }
 
-    // Async resolve asset file
+    val scope = rememberCoroutineScope()
     var resolvedFile by remember(source) { mutableStateOf<File?>(null) }
     LaunchedEffect(source) {
         if (source is PdfSource.PdfSourceFromAsset) {
-            resolvedFile = fileFromAsset(context, source.assetFileName)
+            scope.launch(Dispatchers.IO) {
+                resolvedFile = fileFromAsset(context, source.assetFileName)
+            }
         }
     }
 
